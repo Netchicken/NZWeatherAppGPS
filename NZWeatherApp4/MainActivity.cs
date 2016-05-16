@@ -14,7 +14,8 @@ using Android.Util;
 using Android.Widget;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
+using Android.Runtime;
+using Android.Text;
 
 namespace NZWeatherApp4 {
     [Activity(Label = "NZWeatherApp", MainLauncher = true, Icon = "@drawable/icon")]
@@ -56,8 +57,7 @@ namespace NZWeatherApp4 {
 
             }
 
-        async private void BtnGPS_Click(object sender, EventArgs e)
-        {
+        async private void BtnGPS_Click(object sender, EventArgs e) {
 
 
             DownLloadGPSTemp();
@@ -71,7 +71,7 @@ namespace NZWeatherApp4 {
             //   DisplayAddress(address);
 
 
-        }
+            }
         protected override void OnResume() {
             base.OnResume();
 
@@ -174,24 +174,34 @@ namespace NZWeatherApp4 {
                 webclient.DownloadStringCompleted += webclient_DownloadJSONCompleted;
                 //Connect a method to the run when the DL is finished, 
                 } catch (Exception e) {
-                var toast = string.Format("Temp not working? " + e.Message);
+                var toast = string.Format("DL not working? " + e.Message);
                 Toast.MakeText(this, toast, ToastLength.Long).Show();
                 }
             }
 
         private void webclient_DownloadJSONCompleted(object Sender, DownloadStringCompletedEventArgs e) {
             //http://json2csharp.com/  -- convert JSON to c# classes
+            //http://stackoverflow.com/questions/23174248/newtonsoft-world-weather-online-troubles-with-retrieving-a-value-from-json 
 
-            
 
             string TempDataJSON = e.Result;
-            AllText.Text = URL +" " +TempDataJSON;
-            //    var weather = JObject.Parse(TempDataJSON);
-            //  var json = JsonConvert.SerializeObject(TempDataJSON);
-            var temp = JsonConvert.DeserializeObject<CurrentCondition>(TempDataJSON);
-            var temp2 = JsonConvert.DeserializeObject<Weather>(TempDataJSON);
 
-            AllText.Text = "Weatheronline = " + temp.temp_C +" " + temp2.tempMaxC;
+            //We need to parse the class that has Data in it public Data data { get; set; } in this case its called Root, but it might not be.
+
+            var root = JsonConvert.DeserializeObject<RootObject>(TempDataJSON);
+
+            //then we pass out the data into the classes we want to use. Its coming out as a list, so we get the first entry [0]
+            CurrentCondition currentCondition = root.data.current_condition[0];
+            
+            Weather weather = root.data.weather[0];
+            //then we can do whatever we like with it. 
+              AllText.Text = "Current Temp = " + currentCondition.temp_C +"Min " + weather.tempMinC + " Max " + weather.tempMaxC + " Wind " + currentCondition.windspeedKmph;
+            
+           
+            //https://forums.xamarin.com/discussion/56484/need-to-put-html-into-a-label 
+
+            //  AllText.TextFormatted = Html.FromHtml("<ul>Current Temp = " + currentCondition.temp_C + "</ul>");
+           // AllText.SetText(Html.FromHtml("<bold>Current Temp = " + currentCondition.temp_C + "</bold>"), TextView.BufferType.Normal);
 
             }
 

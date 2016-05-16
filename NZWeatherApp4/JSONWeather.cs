@@ -11,8 +11,7 @@ using Android.Views;
 using Android.Widget;
 
 namespace NZWeatherApp4 {
-    //  class JSONWeather {
-
+   
     public class Request {
         public string type { get; set; }
         public string query { get; set; }
