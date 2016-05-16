@@ -12,6 +12,8 @@ using Android.Locations;
 using Android.OS;
 using Android.Util;
 using Android.Widget;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 
 namespace NZWeatherApp4 {
@@ -24,7 +26,6 @@ namespace NZWeatherApp4 {
         LocationManager locMgr;
         string locationProvider;
         private Location CurrentLocation;
-        string locProv;
         TextView GPSText;
         TextView AllText;
         TextView TempText;
@@ -55,18 +56,22 @@ namespace NZWeatherApp4 {
 
             }
 
-        async private void BtnGPS_Click(object sender, EventArgs e) {
-
-            if (CurrentLocation == null) {
-                AllText.Text = "Can't determine the current address. Try again in a few minutes.";
-                return;
-                }
-
-            Address address = await ReverseGeocodeCurrentLocation();
-            DisplayAddress(address);
+        async private void BtnGPS_Click(object sender, EventArgs e)
+        {
 
 
-            }
+            DownLloadGPSTemp();
+
+            //if (CurrentLocation == null) {
+            //    AllText.Text = "Can't determine the current address. Try again in a few minutes.";
+            //    return;
+            //    }
+
+            //   Address address = await ReverseGeocodeCurrentLocation();
+            //   DisplayAddress(address);
+
+
+        }
         protected override void OnResume() {
             base.OnResume();
 
@@ -103,10 +108,8 @@ namespace NZWeatherApp4 {
         private void UpdateGPSLocation() {
             Lat = CurrentLocation.Latitude.ToString();
             Lon = CurrentLocation.Longitude.ToString();
-            Toast.MakeText(this, "Lat " + Lat + "Lon " + Lon, ToastLength.Long).Show();
-            //json  http://api.worldweatheronline.com/free/v1/weather.ashx?q=-43.526429,172.637637&format=json&num_of_days=1&key=4da7nmph2t6yb76hckfbe4ae
-            //xml  http://api.worldweatheronline.com/free/v1/weather.ashx?q=" & myGPS.Lat & "," & myGPS.Lon & "&format=xml&num_of_days=1&key=4da7nmph2t6yb76hckfbe4ae
-            GPSText.Text = "Lat " + Lat + "Lon " + Lon; // just so we know it exists
+            Toast.MakeText(this, "Lat " + Lat + " Lon " + Lon, ToastLength.Long).Show();
+
             }
         //Turn off GPS?
         void ILocationListener.OnProviderDisabled(string provider) {
@@ -147,6 +150,48 @@ namespace NZWeatherApp4 {
         protected override void OnPause() {
             base.OnPause();
             locMgr.RemoveUpdates(this);
+
+            }
+
+
+        //==============================================================================================
+
+        public void DownLloadGPSTemp() {
+            //download the website as a string. https://developer.xamarin.com/recipes/ios/network/web_requests/download_a_file/
+            //json  http://api.worldweatheronline.com/free/v1/weather.ashx?q=-43.526429,172.637637&format=json&num_of_days=1&key=4da7nmph2t6yb76hckfbe4ae
+            //xml  http://api.worldweatheronline.com/free/v1/weather.ashx?q=" & myGPS.Lat & "," & myGPS.Lon & "&format=xml&num_of_days=1&key=4da7nmph2t6yb76hckfbe4ae
+
+            try {
+                URL = "http://api.worldweatheronline.com/free/v1/weather.ashx?q=" + CurrentLocation.Latitude + "," +
+                      CurrentLocation.Longitude + "&format=json&num_of_days=1&key=4da7nmph2t6yb76hckfbe4ae";
+                //downloads the string and returns it
+                var webaddress = new Uri(URL); //Get the URL change it to a Uniform Resource Identifier
+                var webclient = new WebClient(); //Make a webclient to dl stuff ......
+
+
+                webclient.DownloadStringAsync(webaddress); //dl the website 
+                                                           //Pink color means its an event
+                webclient.DownloadStringCompleted += webclient_DownloadJSONCompleted;
+                //Connect a method to the run when the DL is finished, 
+                } catch (Exception e) {
+                var toast = string.Format("Temp not working? " + e.Message);
+                Toast.MakeText(this, toast, ToastLength.Long).Show();
+                }
+            }
+
+        private void webclient_DownloadJSONCompleted(object Sender, DownloadStringCompletedEventArgs e) {
+            //http://json2csharp.com/  -- convert JSON to c# classes
+
+            
+
+            string TempDataJSON = e.Result;
+            AllText.Text = URL +" " +TempDataJSON;
+            //    var weather = JObject.Parse(TempDataJSON);
+            //  var json = JsonConvert.SerializeObject(TempDataJSON);
+            var temp = JsonConvert.DeserializeObject<CurrentCondition>(TempDataJSON);
+            var temp2 = JsonConvert.DeserializeObject<Weather>(TempDataJSON);
+
+            AllText.Text = "Weatheronline = " + temp.temp_C +" " + temp2.tempMaxC;
 
             }
 
