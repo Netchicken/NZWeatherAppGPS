@@ -22,7 +22,7 @@ using Microsoft.Azure.Mobile.Crashes;
 
 namespace NZWeatherApp4
 {
-    [Activity(Label = "NZWeatherApp", MainLauncher = true, Icon = "@drawable/icon")]
+    [Activity(Label = "NZWeatherApp", MainLauncher = false, Icon = "@drawable/icon")]
     public class MainActivity : Activity, ILocationListener
     {
         private Button btnGetWeather;
@@ -46,8 +46,8 @@ namespace NZWeatherApp4
         {
             base.OnCreate(bundle);
 
-            MobileCenter.Start("806ec67e-b6aa-4eb6-92b5-fb9cbb328323",
-                typeof(Analytics), typeof(Crashes));
+            //MobileCenter.Start("806ec67e-b6aa-4eb6-92b5-fb9cbb328323",
+            //typeof(Analytics), typeof(Crashes));
 
             // Set our view from the "main" layout resource  .....
             SetContentView(Resource.Layout.Main);
@@ -187,6 +187,7 @@ namespace NZWeatherApp4
             //json  http://api.worldweatheronline.com/free/v1/weather.ashx?q=-43.526429,172.637637&format=json&num_of_days=1&key=4da7nmph2t6yb76hckfbe4ae
             //xml  http://api.worldweatheronline.com/free/v1/weather.ashx?q=" & myGPS.Lat & "," & myGPS.Lon & "&format=xml&num_of_days=1&key=4da7nmph2t6yb76hckfbe4ae
 
+            //todo https://developer.worldweatheronline.com/signup.aspx  get a new key, mine has expired, its free
             try
             {
                 URL = "http://api.worldweatheronline.com/free/v1/weather.ashx?q=" + CurrentLocation.Latitude + "," +
@@ -203,7 +204,7 @@ namespace NZWeatherApp4
             }
             catch (Exception e)
             {
-                var toast = string.Format("DL not working? " + e.Message);
+                var toast = string.Format("DL not working " + e.Message);
                 Toast.MakeText(this, toast, ToastLength.Long).Show();
             }
         }
@@ -213,6 +214,11 @@ namespace NZWeatherApp4
             //http://json2csharp.com/  -- convert JSON to c# classes
             //http://stackoverflow.com/questions/23174248/newtonsoft-world-weather-online-troubles-with-retrieving-a-value-from-json 
 
+            if (string.IsNullOrEmpty(e.Result))
+            {
+                Toast.MakeText(this, "No data Downloaded", ToastLength.Long).Show();
+                return;
+            }
 
             string TempDataJSON = e.Result;
 
